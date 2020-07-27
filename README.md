@@ -1,2 +1,2 @@
-# Web_0
-Repository for my basic web programming study
+# Ha0 Develog
+Repository for my basic seve _development study
