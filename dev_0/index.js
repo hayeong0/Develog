@@ -9,8 +9,12 @@ app.use(bodyParser.urlencoded({extended: true}));
 // applicaion/json
 app.use(bodyParser.json());
 
+// DB Config
+const db = require('./config/keys').MongoURI;
+
+// Connect to Mongo
 const mongoose = require('mongoose')
-mongoose.connect('mongodb+srv://hayeong:chy0428@@@ha0.hnyx8.mongodb.net/<dbname>?retryWrites=true&w=majority', {
+mongoose.connect(db, {
     useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true, useFindAndModify: false
 }).then(() => console.log('MongoDB connected...'))
 .catch(error => console.log(error))
