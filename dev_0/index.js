@@ -1,6 +1,5 @@
 const express = require('express')
 const app = express()
-const port = 3000
 const bodyParser = require('body-parser')
 const { User } = require('./models/User')
 
@@ -9,8 +8,12 @@ app.use(bodyParser.urlencoded({extended: true}));
 // applicaion/json
 app.use(bodyParser.json());
 
+// DB Config
+const db = require('./config/keys').MongoURI;
+
+// Connect to Mongo
 const mongoose = require('mongoose')
-mongoose.connect('mongodb+srv://hayeong:chy0428@@@ha0.hnyx8.mongodb.net/<dbname>?retryWrites=true&w=majority', {
+mongoose.connect(db, {
     useNewUrlParser: true, useUnifiedTopology: true, useCreateIndex: true, useFindAndModify: false
 }).then(() => console.log('MongoDB connected...'))
 .catch(error => console.log(error))
@@ -30,7 +33,6 @@ app.post('/register', (req, res) => {
 
 
 app.get('/', (req, res) => res.send('Develog!'))
-app.listen(port, () => console.log(`Example app listening on port ${port}!`))
 
-
-
+const PORT = process.env.PORT || 3000
+app.listen(PORT, () => console.log(`Example app listening on port ${PORT}!`))
