@@ -73,13 +73,20 @@ userSchema.methods.generateToken = function(cb) {
     })
 }
  
-// userSchema.statics.findByToken = function(token, cb) {
-//     var user = this;
+userSchema.statics.findByToken = function(token, cb) {
+    var user = this;
+    // token decode
+    jwt.verify(token, 'secretToken', function(err, decoded) {
+        // user id이용하여 user 찾고, client에서 가져온 token과 db에 보관된 토큰 일치하는지
+        user.findOne({
+            "_id": decoded, 
+            "token": token}, function(err, user) {
+                if(err) return cb(err);
+                cb(null, user);
+            })
+    })
+}
 
-//     jwt.verify(token, 'secretToken', function(err, decoded) {
-//         user.findOne
-//     })
-// }
 const User = mongoose.model('User', userSchema)
 
 module.exports = { User } //다른 곳에서도 쓸 수 있게끔

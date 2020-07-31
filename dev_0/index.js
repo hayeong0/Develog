@@ -4,6 +4,7 @@ const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
 const { User } = require('./models/User');
+const { auth } = require('./middleware/auth');
 // DB Config
 const db = require('./config/keys');
 
@@ -22,7 +23,7 @@ mongoose.connect(db.mongoURI,{
 
 
 app.get('/', (req, res) => res.send('Develog!'));
-app.post('/register', (req, res) => {
+app.post('/api/users/register', (req, res) => {
     // 회원 가입시 필요한 정보 client에서 가져와 DB에 넣기
     // body parser를 이용하여 req로 전송
     const user = new User(req.body)
@@ -35,7 +36,7 @@ app.post('/register', (req, res) => {
     })
 })
 
-app.post('/login', (req, res) => {
+app.post('/api/users/login', (req, res) => {
     // 요청된 이메일이 데이터베이스에 있는지 찾기
     User.findOne({ email: req.body.email }, (err, user) => {
         if(!user) {
@@ -66,6 +67,21 @@ app.post('/login', (req, res) => {
         })
     })    
 })
+
+app.get('/api/users/auth', auth, (req, res)  => {
+    // 여기가지 통과 --> authentication이 ture라는 뜻
+    res.status(200).json({
+        _id: req.user._id,
+        isAdmin: req.user.role === 0 ? false : true,
+        isAuth: true, 
+        email: req.user.email,
+        name: req.user.name,
+        lastname: req.user.lastname,
+        role: req.user.role,
+        image: req.user.image
+    })
+})
+
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Example app listening on port ${PORT}!`))
