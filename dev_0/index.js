@@ -3,7 +3,7 @@ const app = express();
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 
-const { User } = require('./models/User');
+const { User } = require('./models/user');
 const { auth } = require('./middleware/auth');
 // DB Config
 const db = require('./config/keys');
@@ -82,6 +82,17 @@ app.get('/api/users/auth', auth, (req, res)  => {
     })
 })
 
+app.get('/api/users/logout', auth, (req, res) => {
+    User.findOneAndRemove({_id: req.user._id},
+        {token: ""}, (err, user) => {
+            if(err) return res.json({
+                success: false, err
+            });
+            return res.status(200).send({
+                success: true
+            }); 
+        })
+})
 
 const PORT = process.env.PORT || 3000
 app.listen(PORT, () => console.log(`Example app listening on port ${PORT}!`))
