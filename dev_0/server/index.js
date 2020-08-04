@@ -7,7 +7,8 @@ const { User } = require('./models/user');
 const { auth } = require('./middleware/auth');
 // DB Config
 const db = require('./config/keys');
-
+var cors = require('cors');
+app.use(cors())
 // application/x-www-form-urlenconded
 app.use(bodyParser.urlencoded({extended: true}));
 // applicaion/json
@@ -22,7 +23,11 @@ mongoose.connect(db.mongoURI,{
 .catch(error => console.log(error))
 
 
+
 app.get('/', (req, res) => res.send('Develog!'));
+
+app.get('/api/hello', (req, res) =>  res.send("안녕~~ "));
+
 app.post('/api/users/register', (req, res) => {
     // 회원 가입시 필요한 정보 client에서 가져와 DB에 넣기
     // body parser를 이용하여 req로 전송
@@ -94,5 +99,6 @@ app.get('/api/users/logout', auth, (req, res) => {
         })
 })
 
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 5000
+//const PORT = 5000
 app.listen(PORT, () => console.log(`Example app listening on port ${PORT}!`))
