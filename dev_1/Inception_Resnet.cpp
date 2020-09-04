@@ -202,7 +202,6 @@ public:
         Operator<DTYPE>* out1 = pInput;
         Operator<DTYPE>* out2 = pInput;
         Operator<DTYPE>* out = pInput;
-        Operator<DTYPE>* tmp = pInput;
 
         // out 1
         out1 = new ConvolutionLayer2D<DTYPE>(
@@ -255,6 +254,160 @@ public:
         return TRUE;
     }
 };
+template <typename DTYPE>
+class ReductionA : public Module<DTYPE>
+{
+private:
+public:
+    ReductionA(Operator<DTYPE>* pInput, int pNumInputChannel,
+               int pNumOutputChannel, int pStride = 1, std::string pName = NULL)
+    {
+        Alloc(pInput, pNumInputChannel, pNumOutputChannel, pStride, pName);
+    }
+
+    virtual ~ReductionA() {}
+
+    int Alloc(Operator<DTYPE>* pInput, int pNumInputChannel,
+              int pNumOutputChannel, int pStride, std::string pName)
+    {
+        this->SetInput(pInput);
+
+        Operator<DTYPE>* remember = pInput;
+        Operator<DTYPE>* out1 = pInput;
+        Operator<DTYPE>* out2 = pInput;
+        Operator<DTYPE>* out3 = pInput;
+        Operator<DTYPE>* out = pInput;
+
+        // out 1
+        out1 = new ConvolutionLayer2D<DTYPE>(
+            out1, 256, 384, 3, 3, 2, 2, 1, FALSE, "ReductionA" + pName)
+        );
+        out1 = new BatchNormalizeLayer<DTYPE>(out1, TRUE, "ReductionA" + pName);
+        out1 = new Relu<DTYPE>(out1, "ReductionA_Relu1" + pName);
+
+        // out 2-1
+        out2 = new ConvolutionLayer2D<DTYPE>(
+            out2, 256, 192, 1, 1, pStride, pStride, 1, FALSE, "ReductionA" + pName)
+        );
+        out2 = new BatchNormalizeLayer<DTYPE>(out2, TRUE, "ReductionA" + pName);
+        out2 = new Relu<DTYPE>(out2, "ReductionA_Relu2-1" + pName);
+
+        // out 2-2
+        out2 = new ConvolutionLayer2D<DTYPE>(
+            out2, 192, 192, 3, 3, pStride, pStride, 1, FALSE, "ReductionA" + pName)
+        );
+        out2 = new BatchNormalizeLayer<DTYPE>(out2, TRUE, "ReductionA" + pName);
+        out2 = new Relu<DTYPE>(out2, "ReductionA_Relu2-2" + pName);
+
+        // out 2-3
+        out2 = new ConvolutionLayer2D<DTYPE>(
+            out2, 192, 256, 3, 3, 2, 2, 1, FALSE, "ReductionA" + pName)
+        );
+        out2 = new BatchNormalizeLayer<DTYPE>(out2, TRUE, "ReductionA" + pName);
+        out2 = new Relu<DTYPE>(out2, "ReductionA_Relu2-3" + pName);
+
+        // out3
+        out3 = new Maxpooling2D<DTYPE>(out3, 3, 3, 2, 2, "MaxPool");
+
+        // concat
+        out =
+            new ConcatenateChannelWise<DTYPE>(out1, out2, "ReductionA_ConCat");
+        out = new ConcatenateChannelWise<DTYPE>(out, out3, "ReductionA_ConCat");
+
+        this->AnalyzeGraph(out);
+
+        return TRUE;
+    }
+};
+
+template <typename DTYPE>
+class ReductionB : public Module<DTYPE>
+{
+private:
+public:
+    ReductionB(Operator<DTYPE>* pInput, int pNumInputChannel,
+               int pNumOutputChannel, int pStride = 1, std::string pName = NULL)
+    {
+        Alloc(pInput, pNumInputChannel, pNumOutputChannel, pStride, pName);
+    }
+
+    virtual ~ReductionB() {}
+
+    int Alloc(Operator<DTYPE>* pInput, int pNumInputChannel,
+              int pNumOutputChannel, int pStride, std::string pName)
+    {
+        this->SetInput(pInput);
+
+        Operator<DTYPE>* remember = pInput;
+        Operator<DTYPE>* out1 = pInput;
+        Operator<DTYPE>* out2 = pInput;
+        Operator<DTYPE>* out3 = pInput;
+        Operator<DTYPE>* out4 = pInput;
+        Operator<DTYPE>* out = pInput;
+
+        // out 1
+        out1 = new ConvolutionLayer2D<DTYPE>(
+            out1, 896, 256, 1, 1, pStride, pStride, 0, FALSE, "ReductionB" + pName)
+        );
+        out1 = new BatchNormalizeLayer<DTYPE>(out1, TRUE, "ReductionB" + pName);
+        out1 = new Relu<DTYPE>(out1, "ReductionB_Relu1" + pName);
+
+        // out 1-2
+        out1 = new ConvolutionLayer2D<DTYPE>(
+            out1, 256, 384, 3, 3, 2, 2, 0, FALSE, "ReductionB" + pName)
+        );
+        out1 = new BatchNormalizeLayer<DTYPE>(out1, TRUE, "ReductionB" + pName);
+        out1 = new Relu<DTYPE>(out1, "ReductionB_Relu2" + pName);
+
+        // out 2-1
+        out2 = new ConvolutionLayer2D<DTYPE>(
+            out2, 896, 256, 1, 1, pStride, pStride, 0, FALSE, "ReductionB" + pName)
+        );
+        out2 = new BatchNormalizeLayer<DTYPE>(out2, TRUE, "ReductionB" + pName);
+        out2 = new Relu<DTYPE>(out2, "ReductionB_Relu2" + pName);
+
+        // out 2-2
+        out2 = new ConvolutionLayer2D<DTYPE>(
+            out2, 256, 256, 3, 3, 2, 2, 0, FALSE, "ReductionB" + pName)
+        );
+        out2 = new BatchNormalizeLayer<DTYPE>(out2, TRUE, "ReductionB" + pName);
+        out2 = new Relu<DTYPE>(out2, "ReductionB_Relu2-2" + pName);
+
+        // out 3-1
+        out3 = new ConvolutionLayer2D<DTYPE>(
+            out3, 896, 256, 1, 1, pStride, pStride, 1, FALSE, "ReductionB" + pName)
+        );
+        out3 = new BatchNormalizeLayer<DTYPE>(out3, TRUE, "ReductionB" + pName);
+        out3 = new Relu<DTYPE>(out3, "ReductionB_Relu3" + pName);
+
+        // out 3-2
+        out3 = new ConvolutionLayer2D<DTYPE>(
+            out3, 256, 256, 3, 3, pStride, pStride, 0, FALSE, "ReductionB" + pName)
+        );
+        out3 = new BatchNormalizeLayer<DTYPE>(out3, TRUE, "ReductionB" + pName);
+        out3 = new Relu<DTYPE>(out3, "ReductionB_Relu3" + pName);
+
+        // out 3-2
+        out3 = new ConvolutionLayer2D<DTYPE>(
+            out3, 256, 256, 3, 3, 2, 2, 1, FALSE, "ReductionB" + pName)
+        );
+        out3 = new BatchNormalizeLayer<DTYPE>(out3, TRUE, "ReductionB" + pName);
+        out3 = new Relu<DTYPE>(out3, "ReductionB_Relu3" + pName);
+
+        // Out 4
+        out4 = new Maxpooling2D<DTYPE>(out4, 3, 3, 2, 2, "MaxPool");
+
+        // concat
+        out =
+            new ConcatenateChannelWise<DTYPE>(out1, out2, "ReductionB_ConCat");
+        out = new ConcatenateChannelWise<DTYPE>(out, out3, "ReductionB_ConCat");
+        out = new ConcatenateChannelWise<DTYPE>(out, out4, "ReductionB_ConCat");
+
+        this->AnalyzeGraph(out);
+
+        return TRUE;
+    }
+};
 
 template <typename DTYPE>
 class InceptionResNet : public NeuralNetwork<DTYPE>
@@ -281,23 +434,53 @@ public:
         this->SetInput(2, pInput, pLabel);
 
         // init
-        m_numInputChannel = 64;
         m_numOutputChannel = 0;
 
         Operator<DTYPE>* out = pInput;
 
+        /* stem  layer */
+
         // ReShape
-        out = new ReShape<DTYPE>(out, 3, 224, 224, "ReShape");
-        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
+        out = new ReShape<DTYPE>(out, 3, 299, 299, "ReShape");
 
         // 1
-        out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2,
-                                            2, 3, FALSE, "Conv");
-        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
-        out = new Relu<DTYPE>(out, "Relu0");
+        out = new ConvolutionLayer2D<DTYPE>(out, 3, 32, 3, 3, 2, 2, 0, FALSE,
+                                            "Conv");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
+        out = new Relu<DTYPE>(out, "Relu");
 
-        out = new Maxpooling2D<float>(out, 3, 3, 2, 2, 1, "MaxPool_2");
-        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
+        // 2
+        out = new ConvolutionLayer2D<DTYPE>(out, 32, 32, 3, 3, 1, 1, 0, FALSE,
+                                            "Conv");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
+        out = new Relu<DTYPE>(out, "Relu");
+
+        // 3
+        out = new ConvolutionLayer2D<DTYPE>(out, 32, 64, 3, 3, 1, 1, 1, FALSE,
+                                            "Conv");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
+        out = new Relu<DTYPE>(out, "Relu");
+
+        // 4
+        out = new Maxpooling2D<DTYPE>(out, 3, 3, 2, 2, 0, "MaxPool");
+
+        // 5
+        out = new ConvolutionLayer2D<DTYPE>(out, 64, 80, 1, 1, 1, 1, 0, FALSE,
+                                            "Conv");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
+        out = new Relu<DTYPE>(out, "Relu");
+
+        // 6
+        out = new ConvolutionLayer2D<DTYPE>(out, 80, 192, 3, 3, 1, 1, 0, FALSE,
+                                            "Conv");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
+        out = new Relu<DTYPE>(out, "Relu");
+
+        // 7
+        out = new ConvolutionLayer2D<DTYPE>(out, 192, 256, 3, 3, 2, 2, 0, FALSE,
+                                            "Conv");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
+        out = new Relu<DTYPE>(out, "Relu");
 
         out = this->MakeLayer(out, m_numInputChannel, pBlockType, pNumOfBlock1,
                               1, "Block1");
@@ -308,7 +491,9 @@ public:
         // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
         // out = new Relu<DTYPE>(out, "Relu1");
 
+        out = new Dropout<DTYPE>(out, "Dropout");
         out = new GlobalAvaragePooling2D<DTYPE>(out, "Avg Pooling");
+        // out = new AvaragePooling2D<DTYPE>(out, "Average pooling");
 
         out = new ReShape<DTYPE>(out, 1, 1, 512, "ReShape");
 
@@ -317,16 +502,21 @@ public:
 
         this->AnalyzeGraph(out);
 
-        // ======================= Select LossFunction Function
-        // ===================
+        // ================= Select LossFunction Function =============
         this->SetLossFunction(
             new SoftmaxCrossEntropy<float>(out, pLabel, "SCE"));
-        // SetLossFunction(new MSE<float>(out, label, "MSE"));
+        // SetLossFunction(new TripletLoss<float>(out, label, 1.0,
+        // "TripletLoss"));
+        // SetLossFunction(new CrossEntropy<float>(out, label, "CE"));
 
         // ======================= Select Optimizer ===================
-
         this->SetOptimizer(new AdamOptimizer<float>(
             this->GetParameter(), 0.001, 0.9, 0.999, 1e-08, 5e-4, MINIMIZE));
+
+        // this->SetOptimizer(new AdamOptimizer<float>(
+        //     this->GetParameter(), 0.0001, 0.9, 0.999, 1e-08, MINIMIZE));
+        // this->SetOptimizer(new AdamOptimizer<float>(
+        //     this->GetParameter(), 0.00001, 0.9, 0.999, 1e-08, MINIMIZE));
 
         return TRUE;
     }
