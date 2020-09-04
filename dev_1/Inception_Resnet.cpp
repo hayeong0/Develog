@@ -125,7 +125,6 @@ public:
         Operator<DTYPE>* out1 = pInput;
         Operator<DTYPE>* out2 = pInput;
         Operator<DTYPE>* out = pInput;
-        Operator<DTYPE>* tmp = pInput;
 
         // out 1
         out1 = new ConvolutionLayer2D<DTYPE>(
@@ -133,7 +132,7 @@ public:
         );
         out1 =
             new BatchNormalizeLayer<DTYPE>(out1, TRUE, "Block17_conv1" + pName);
-        out1 = new Relu<DTYPE>(out1, "Block35_Relu1" + pName);
+        out1 = new Relu<DTYPE>(out1, "Block17_Relu1" + pName);
 
         // out 2-1
         out2 = new ConvolutionLayer2D<DTYPE>(
@@ -141,7 +140,7 @@ public:
         );
         out2 =
             new BatchNormalizeLayer<DTYPE>(out2, TRUE, "Block17_conv2" + pName);
-        out2 = new Relu<DTYPE>(out2, "Block35_Relu2" + pName);
+        out2 = new Relu<DTYPE>(out2, "Block17_Relu2" + pName);
 
         // out 2-2
         out2 = new ConvolutionLayer2D<DTYPE>(out2, 128, 128, 1, 7, pStride,
@@ -150,7 +149,7 @@ public:
         );
         out2 =
             new BatchNormalizeLayer<DTYPE>(out2, TRUE, "Block17_conv2" + pName);
-        out2 = new Relu<DTYPE>(out2, "Block35_Relu2" + pName);
+        out2 = new Relu<DTYPE>(out2, "Block17_Relu2" + pName);
 
         // out 2-3
         out2 = new ConvolutionLayer2D<DTYPE>(out2, 128, 128, 7, 1, pStride,
@@ -160,7 +159,6 @@ public:
         out2 =
             new BatchNormalizeLayer<DTYPE>(out2, TRUE, "Block17_conv2" + pName);
         out2 = new Relu<DTYPE>(out2, "Block17_Relu2" + pName);
-
 
         // concat
         out = new ConcatenateChannelWise<DTYPE>(out1, out2, "Block17_ConCat");
@@ -174,7 +172,7 @@ public:
                                 "Incpetion_ResNet_Skip_Add" + pName);
 
         // Last Relu
-        out = new Relu<DTYPE>(out, "Block35_Relu" + pName);
+        out = new Relu<DTYPE>(out, "Block17_Relu" + pName);
 
         this->AnalyzeGraph(out);
 
@@ -182,134 +180,204 @@ public:
     }
 };
 
-    template <typename DTYPE>
-    class InceptionResNet : public NeuralNetwork<DTYPE>
+template <typename DTYPE>
+class Block8 : public Module<DTYPE>
+{
+private:
+public:
+    Block8(Operator<DTYPE>* pInput, int pNumInputChannel, int pNumOutputChannel,
+           int pStride = 1, std::string pName = NULL)
     {
-    private:
-        int m_numInputChannel;
-        int m_numOutputChannel;
+        Alloc(pInput, pNumInputChannel, pNumOutputChannel, pStride, pName);
+    }
 
-    public:
-        InceptionResNet(Tensorholder<DTYPE>* pInput,
-                        Tensorholder<DTYPE>* pLabel, std::string pBlockType,
-                        int pNumOfBlock1, int pNumOfBlock2, int pNumOfBlock3,
-                        int pNumOfBlock4, int pNumOfClass)
+    virtual ~Block8() {}
+
+    int Alloc(Operator<DTYPE>* pInput, int pNumInputChannel,
+              int pNumOutputChannel, int pStride, std::string pName)
+    {
+        this->SetInput(pInput);
+
+        Operator<DTYPE>* remember = pInput;
+        Operator<DTYPE>* out1 = pInput;
+        Operator<DTYPE>* out2 = pInput;
+        Operator<DTYPE>* out = pInput;
+        Operator<DTYPE>* tmp = pInput;
+
+        // out 1
+        out1 = new ConvolutionLayer2D<DTYPE>(
+            out1, 1792, 192, 1, 1, pStride, pStride, 1, FALSE, "Block8_conv" + pName)
+        );
+        out1 =
+            new BatchNormalizeLayer<DTYPE>(out1, TRUE, "Block8_conv1" + pName);
+        out1 = new Relu<DTYPE>(out1, "Block8_Relu1" + pName);
+
+        // out 2-1
+        out2 = new ConvolutionLayer2D<DTYPE>(
+            out2, 1792, 192, 1, 1, pStride, pStride, 1, FALSE, "Block8_conv" + pName)
+        );
+        out2 =
+            new BatchNormalizeLayer<DTYPE>(out2, TRUE, "Block8_conv2" + pName);
+        out2 = new Relu<DTYPE>(out2, "Block8_Relu2" + pName);
+
+        // out 2-2
+        out2 = new ConvolutionLayer2D<DTYPE>(
+            out2, 192, 192, 1, 3, pStride, pStride, 0, 1, FALSE, "Block8_conv" + pName)
+        );
+        out2 =
+            new BatchNormalizeLayer<DTYPE>(out2, TRUE, "Block8_conv2" + pName);
+        out2 = new Relu<DTYPE>(out2, "Block8_Relu2" + pName);
+
+        // out 2-3
+        out2 = new ConvolutionLayer2D<DTYPE>(
+            out2, 192, 192, 3, 1, pStride, pStride, 1, 0, FALSE, "Block8_conv" + pName)
+        );
+        out2 =
+            new BatchNormalizeLayer<DTYPE>(out2, TRUE, "Block8_conv2" + pName);
+        out2 = new Relu<DTYPE>(out2, "Block8_Relu2" + pName);
+
+        // concat
+        out = new ConcatenateChannelWise<DTYPE>(out1, out2, "Block8_ConCat");
+        out = new ConvolutionLayer2D<DTYPE>(out, 384, 1792, 1, 1, pStride,
+                                            pStride, 1, FALSE,
+                                            "Block8_conv" + pName);
+        );
+
+        // Add (for skip Connection)
+        out = new Addall<DTYPE>(remember, out,
+                                "Incpetion_ResNet_Skip_Add" + pName);
+
+        // Last Relu
+        out = new Relu<DTYPE>(out, "Block8_Relu" + pName);
+
+        this->AnalyzeGraph(out);
+
+        return TRUE;
+    }
+};
+
+template <typename DTYPE>
+class InceptionResNet : public NeuralNetwork<DTYPE>
+{
+private:
+    int m_numInputChannel;
+    int m_numOutputChannel;
+
+public:
+    InceptionResNet(Tensorholder<DTYPE>* pInput, Tensorholder<DTYPE>* pLabel,
+                    std::string pBlockType, int pNumOfBlock1, int pNumOfBlock2,
+                    int pNumOfBlock3, int pNumOfBlock4, int pNumOfClass)
+    {
+        Alloc(pInput, pLabel, pBlockType, pNumOfBlock1, pNumOfBlock2,
+              pNumOfBlock3, pNumOfBlock4, pNumOfClass);
+    }
+
+    virtual ~InceptionResNet() {}
+
+    int Alloc(Tensorholder<DTYPE>* pInput, Tensorholder<DTYPE>* pLabel,
+              std::string pBlockType, int pNumOfBlock1, int pNumOfBlock2,
+              int pNumOfBlock3, int pNumOfBlock4, int pNumOfClass)
+    {
+        this->SetInput(2, pInput, pLabel);
+
+        // init
+        m_numInputChannel = 64;
+        m_numOutputChannel = 0;
+
+        Operator<DTYPE>* out = pInput;
+
+        // ReShape
+        out = new ReShape<DTYPE>(out, 3, 224, 224, "ReShape");
+        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
+
+        // 1
+        out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7, 2,
+                                            2, 3, FALSE, "Conv");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
+        out = new Relu<DTYPE>(out, "Relu0");
+
+        out = new Maxpooling2D<float>(out, 3, 3, 2, 2, 1, "MaxPool_2");
+        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
+
+        out = this->MakeLayer(out, m_numInputChannel, pBlockType, pNumOfBlock1,
+                              1, "Block1");
+        out = this->MakeLayer(out, 128, pBlockType, pNumOfBlock2, 2, "Block2");
+        out = this->MakeLayer(out, 256, pBlockType, pNumOfBlock3, 2, "Block3");
+        out = this->MakeLayer(out, 512, pBlockType, pNumOfBlock3, 2, "Block4");
+
+        // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
+        // out = new Relu<DTYPE>(out, "Relu1");
+
+        out = new GlobalAvaragePooling2D<DTYPE>(out, "Avg Pooling");
+
+        out = new ReShape<DTYPE>(out, 1, 1, 512, "ReShape");
+
+        out = new Linear<DTYPE>(out, 512, pNumOfClass, FALSE, "Classification");
+        // out = new BatchNormalizeLayer < DTYPE > (out, FALSE, "BN0");
+
+        this->AnalyzeGraph(out);
+
+        // ======================= Select LossFunction Function
+        // ===================
+        this->SetLossFunction(
+            new SoftmaxCrossEntropy<float>(out, pLabel, "SCE"));
+        // SetLossFunction(new MSE<float>(out, label, "MSE"));
+
+        // ======================= Select Optimizer ===================
+
+        this->SetOptimizer(new AdamOptimizer<float>(
+            this->GetParameter(), 0.001, 0.9, 0.999, 1e-08, 5e-4, MINIMIZE));
+
+        return TRUE;
+    }
+
+    Operator<DTYPE>* MakeLayer(Operator<DTYPE>* pInput, int pNumOfChannel,
+                               std::string pBlockType, int pNumOfBlock,
+                               int pStride, std::string pName = NULL)
+    {
+        if (pNumOfBlock == 0)
         {
-            Alloc(pInput, pLabel, pBlockType, pNumOfBlock1, pNumOfBlock2,
-                  pNumOfBlock3, pNumOfBlock4, pNumOfClass);
+            return pInput;
         }
-
-        virtual ~InceptionResNet() {}
-
-        int Alloc(Tensorholder<DTYPE>* pInput, Tensorholder<DTYPE>* pLabel,
-                  std::string pBlockType, int pNumOfBlock1, int pNumOfBlock2,
-                  int pNumOfBlock3, int pNumOfBlock4, int pNumOfClass)
+        else if ((pBlockType == "BasicBlock") && (pNumOfBlock > 0))
         {
-            this->SetInput(2, pInput, pLabel);
-
-            // init
-            m_numInputChannel = 64;
-            m_numOutputChannel = 0;
-
             Operator<DTYPE>* out = pInput;
 
-            // ReShape
-            out = new ReShape<DTYPE>(out, 3, 224, 224, "ReShape");
-            // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
+            out = new BasicBlock<DTYPE>(out, m_numInputChannel, pNumOfChannel,
+                                        pStride, pName);
+            int pNumOutputChannel = pNumOfChannel;
 
-            // 1
-            out = new ConvolutionLayer2D<DTYPE>(out, 3, m_numInputChannel, 7, 7,
-                                                2, 2, 3, FALSE, "Conv");
-            out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN0");
-            out = new Relu<DTYPE>(out, "Relu0");
+            for (int i = 1; i < pNumOfBlock; i++)
+            {
+                out = new BasicBlock<DTYPE>(out, pNumOutputChannel,
+                                            pNumOutputChannel, 1, pName);
+            }
 
-            out = new Maxpooling2D<float>(out, 3, 3, 2, 2, 1, "MaxPool_2");
-            // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
+            m_numInputChannel = pNumOutputChannel;
 
-            out = this->MakeLayer(out, m_numInputChannel, pBlockType,
-                                  pNumOfBlock1, 1, "Block1");
-            out = this->MakeLayer(out, 128, pBlockType, pNumOfBlock2, 2,
-                                  "Block2");
-            out = this->MakeLayer(out, 256, pBlockType, pNumOfBlock3, 2,
-                                  "Block3");
-            out = this->MakeLayer(out, 512, pBlockType, pNumOfBlock3, 2,
-                                  "Block4");
-
-            // out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN1");
-            // out = new Relu<DTYPE>(out, "Relu1");
-
-            out = new GlobalAvaragePooling2D<DTYPE>(out, "Avg Pooling");
-
-            out = new ReShape<DTYPE>(out, 1, 1, 512, "ReShape");
-
-            out = new Linear<DTYPE>(out, 512, pNumOfClass, FALSE,
-                                    "Classification");
-            // out = new BatchNormalizeLayer < DTYPE > (out, FALSE, "BN0");
-
-            this->AnalyzeGraph(out);
-
-            // ======================= Select LossFunction Function
-            // ===================
-            this->SetLossFunction(
-                new SoftmaxCrossEntropy<float>(out, pLabel, "SCE"));
-            // SetLossFunction(new MSE<float>(out, label, "MSE"));
-
-            // ======================= Select Optimizer ===================
-
-            this->SetOptimizer(new AdamOptimizer<float>(this->GetParameter(),
-                                                        0.001, 0.9, 0.999,
-                                                        1e-08, 5e-4, MINIMIZE));
-
-            return TRUE;
+            return out;
         }
-
-        Operator<DTYPE>* MakeLayer(Operator<DTYPE>* pInput, int pNumOfChannel,
-                                   std::string pBlockType, int pNumOfBlock,
-                                   int pStride, std::string pName = NULL)
+        else if ((pBlockType == "Bottleneck") && (pNumOfBlock > 0))
         {
-            if (pNumOfBlock == 0)
-            {
-                return pInput;
-            }
-            else if ((pBlockType == "BasicBlock") && (pNumOfBlock > 0))
-            {
-                Operator<DTYPE>* out = pInput;
-
-                out = new BasicBlock<DTYPE>(out, m_numInputChannel,
-                                            pNumOfChannel, pStride, pName);
-                int pNumOutputChannel = pNumOfChannel;
-
-                for (int i = 1; i < pNumOfBlock; i++)
-                {
-                    out = new BasicBlock<DTYPE>(out, pNumOutputChannel,
-                                                pNumOutputChannel, 1, pName);
-                }
-
-                m_numInputChannel = pNumOutputChannel;
-
-                return out;
-            }
-            else if ((pBlockType == "Bottleneck") && (pNumOfBlock > 0))
-            {
-                return NULL;
-            }
-            else
-                return NULL;
+            return NULL;
         }
-    };
-
-    template <typename DTYPE>
-    NeuralNetwork<DTYPE>* Resnet18(Tensorholder<DTYPE>* pInput,
-                                   Tensorholder<DTYPE>* pLabel, int pNumOfClass)
-    {
-        return new ResNet<DTYPE>(pInput, pLabel, "BasicBlock", 2, 2, 2, 2,
-                                 pNumOfClass);
+        else
+            return NULL;
     }
+};
 
-    template <typename DTYPE>
-    NeuralNetwork<DTYPE>* Resnet34(Tensorholder<DTYPE>* pInput,
-                                   Tensorholder<DTYPE>* pLabel, int pNumOfClass)
-    {
-        return new ResNet<DTYPE>(pInput, pLabel, "BasicBlock", 3, 4, 6, 3,
-                                 pNumOfClass);
-    }
+template <typename DTYPE>
+NeuralNetwork<DTYPE>* Resnet18(Tensorholder<DTYPE>* pInput,
+                               Tensorholder<DTYPE>* pLabel, int pNumOfClass)
+{
+    return new ResNet<DTYPE>(pInput, pLabel, "BasicBlock", 2, 2, 2, 2,
+                             pNumOfClass);
+}
+
+template <typename DTYPE>
+NeuralNetwork<DTYPE>* Resnet34(Tensorholder<DTYPE>* pInput,
+                               Tensorholder<DTYPE>* pLabel, int pNumOfClass)
+{
+    return new ResNet<DTYPE>(pInput, pLabel, "BasicBlock", 3, 4, 6, 3,
+                             pNumOfClass);
+}
