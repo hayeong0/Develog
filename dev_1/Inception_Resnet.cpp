@@ -57,7 +57,6 @@ public:
         out3 =
             new ConvolutionLayer2D<DTYPE>(out3, 256, 32, 1, 1, pStride, pStride,
                                           1, FALSE, "Block35_conv" + pName);
-        );
         out3 =
             new BatchNormalizeLayer<DTYPE>(out3, TRUE, "Block35_conv3" + pName);
         out3 = new Relu<DTYPE>(out3, "Block35_Relu3" + pName);
@@ -227,9 +226,9 @@ public:
         out2 = new Relu<DTYPE>(out2, "Block8_Relu2" + pName);
 
         // out 2-3
-        out2 = new ConvolutionLayer2D<DTYPE>(
-            out2, 192, 192, 3, 1, pStride, pStride, 1, 0, FALSE, "Block8_conv" + pName)
-        );
+        out2 = new ConvolutionLayer2D<DTYPE>(out2, 192, 192, 3, 1, pStride,
+                                             pStride, 1, 0, FALSE,
+                                             "Block8_conv" + pName);
         out2 =
             new BatchNormalizeLayer<DTYPE>(out2, TRUE, "Block8_conv2" + pName);
         out2 = new Relu<DTYPE>(out2, "Block8_Relu2" + pName);
@@ -485,7 +484,7 @@ public:
         out = new Block35<DTYPE>(out, 1, "Block35_5");
 
         // ReductionA
-        out = new ReductionA(out, 1, "ReductionA");
+        out = new ReductionA<DTYPE>(out, 1, "ReductionA");
 
         // Block17 * 10
         out = new Block17<DTYPE>(out, 1, "Block17_1");
@@ -500,7 +499,7 @@ public:
         out = new Block17<DTYPE>(out, 1, "Block17_10");
 
         // ReductionB
-        out = new ReductionB(out, 1, "ReductionB");
+        out = new ReductionB<DTYPE>(out, 1, "ReductionB");
 
         // Block8 * 5
         out = new Block8<DTYPE>(out, 1, "Block8_1");
