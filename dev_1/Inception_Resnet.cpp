@@ -1,4 +1,5 @@
 #include "../../../WICWIU_src/NeuralNetwork.hpp"
+#include "../../../WICWIU_src/Operator/Dropout.hpp"
 #include <cuda.h>
 #include <iostream>
 #include <string>
@@ -30,7 +31,7 @@ public:
         // out 1
         out1 =
             new ConvolutionLayer2D<DTYPE>(out1, 256, 32, 1, 1, pStride, pStride,
-                                          1, FALSE, "Block35_conv" + pName);
+                                          0, FALSE, "Block35_conv" + pName);
         out1 =
             new BatchNormalizeLayer<DTYPE>(out1, TRUE, "Block35_conv1" + pName);
         out1 = new Relu<DTYPE>(out1, "Block35_Relu1" + pName);
@@ -38,7 +39,7 @@ public:
         // out 2-1
         out2 =
             new ConvolutionLayer2D<DTYPE>(out2, 256, 32, 1, 1, pStride, pStride,
-                                          1, FALSE, "Block35_conv" + pName);
+                                          0, FALSE, "Block35_conv" + pName);
 
         out2 =
             new BatchNormalizeLayer<DTYPE>(out2, TRUE, "Block35_conv2" + pName);
@@ -56,29 +57,33 @@ public:
         // out 3-1
         out3 =
             new ConvolutionLayer2D<DTYPE>(out3, 256, 32, 1, 1, pStride, pStride,
+                                          0, FALSE, "Block35_conv" + pName);
+        out3 =
+            new BatchNormalizeLayer<DTYPE>(out3, TRUE, "Block35_conv3" + pName);
+        out3 = new Relu<DTYPE>(out3, "Block35_Relu3" + pName);
+        
+        // out 3-2
+        out3 =
+            new ConvolutionLayer2D<DTYPE>(out3, 32, 32, 3, 3, pStride, pStride,
                                           1, FALSE, "Block35_conv" + pName);
         out3 =
             new BatchNormalizeLayer<DTYPE>(out3, TRUE, "Block35_conv3" + pName);
         out3 = new Relu<DTYPE>(out3, "Block35_Relu3" + pName);
 
+        // out 3-3
         out3 =
             new ConvolutionLayer2D<DTYPE>(out3, 32, 32, 3, 3, pStride, pStride,
                                           1, FALSE, "Block35_conv" + pName);
-
         out3 =
             new BatchNormalizeLayer<DTYPE>(out3, TRUE, "Block35_conv3" + pName);
-        out3 = new Relu<DTYPE>(out2, "Block35_Relu3" + pName);
-
-        out3 =
-            new ConvolutionLayer2D<DTYPE>(out3, 32, 32, 3, 3, pStride, pStride,
-                                          1, FALSE, "Block35_conv" + pName);
+        out3 = new Relu<DTYPE>(out3, "Block35_Relu3" + pName);
 
         // concat
         out = new ConcatenateChannelWise<DTYPE>(out1, out2, "Block35_ConCat");
         out = new ConcatenateChannelWise<DTYPE>(out3, out, "Block35_ConCat");
         out =
             new ConvolutionLayer2D<DTYPE>(out, 96, 256, 3, 3, pStride, pStride,
-                                          1, FALSE, "Block35_conv" + pName);
+                                          0, FALSE, "Block35_conv" + pName);
 
         // // ShortCut
         // if ((pStride != 1) || (pNumInputChannel != pNumOutputChannel))
@@ -92,14 +97,14 @@ public:
 
         // Add (for skip Connection)
         out = new Addall<DTYPE>(remember, out,
-                                "Incpetion_ResNet_Skip_Add" + pName);
+                                "Incpetion_ResNet_Skip_Add " + pName);
 
         // Last Relu
         out = new Relu<DTYPE>(out, "Block35_Relu" + pName);
 
         this->AnalyzeGraph(out);
 
-        return out;
+        return TRUE;
     }
 };
 
@@ -108,17 +113,15 @@ class Block17 : public Module<DTYPE>
 {
 private:
 public:
-    Block17(Operator<DTYPE>* pInput, int pNumInputChannel,
-            int pNumOutputChannel, int pStride = 1, std::string pName = NULL)
+    Block17(Operator<DTYPE>* pInput, int pStride = 1, std::string pName = NULL)
         : Module<DTYPE>(pName)
     {
-        Alloc(pInput, pNumInputChannel, pNumOutputChannel, pStride, pName);
+        Alloc(pInput, pStride, pName);
     }
 
     virtual ~Block17() {}
 
-    int Alloc(Operator<DTYPE>* pInput, int pNumInputChannel,
-              int pNumOutputChannel, int pStride, std::string pName)
+    int Alloc(Operator<DTYPE>* pInput, int pStride, std::string pName)
     {
         this->SetInput(pInput);
 
@@ -129,7 +132,7 @@ public:
 
         // out 1
         out1 = new ConvolutionLayer2D<DTYPE>(out1, 896, 128, 1, 1, pStride,
-                                             pStride, 1, FALSE,
+                                             pStride, 0, FALSE,
                                              "Block17_conv" + pName);
         out1 =
             new BatchNormalizeLayer<DTYPE>(out1, TRUE, "Block17_conv1" + pName);
@@ -137,7 +140,7 @@ public:
 
         // out 2-1
         out2 = new ConvolutionLayer2D<DTYPE>(out2, 896, 128, 1, 1, pStride,
-                                             pStride, 1, FALSE,
+                                             pStride, 0, FALSE,
                                              "Block17_conv" + pName);
 
         out2 =
@@ -164,7 +167,7 @@ public:
         out = new ConcatenateChannelWise<DTYPE>(out1, out2, "Block17_ConCat");
         out =
             new ConvolutionLayer2D<DTYPE>(out, 256, 896, 1, 1, pStride, pStride,
-                                          1, FALSE, "Block17_conv" + pName);
+                                          0, FALSE, "Block17_conv" + pName);
 
         // Add (for skip Connection)
         out = new Addall<DTYPE>(remember, out,
@@ -175,7 +178,7 @@ public:
 
         this->AnalyzeGraph(out);
 
-        return out;
+        return TRUE;
     }
 };
 
@@ -203,7 +206,7 @@ public:
 
         // out 1
         out1 = new ConvolutionLayer2D<DTYPE>(out1, 1792, 192, 1, 1, pStride,
-                                             pStride, 1, FALSE,
+                                             pStride, 0, FALSE,
                                              "Block8_conv" + pName);
         out1 =
             new BatchNormalizeLayer<DTYPE>(out1, TRUE, "Block8_conv1" + pName);
@@ -211,7 +214,7 @@ public:
 
         // out 2-1
         out2 = new ConvolutionLayer2D<DTYPE>(out2, 1792, 192, 1, 1, pStride,
-                                             pStride, 1, FALSE,
+                                             pStride, 0, FALSE,
                                              "Block8_conv" + pName);
         out2 =
             new BatchNormalizeLayer<DTYPE>(out2, TRUE, "Block8_conv2" + pName);
@@ -236,7 +239,7 @@ public:
         // concat
         out = new ConcatenateChannelWise<DTYPE>(out1, out2, "Block8_ConCat");
         out = new ConvolutionLayer2D<DTYPE>(out, 384, 1792, 1, 1, pStride,
-                                            pStride, 1, FALSE,
+                                            pStride, 0, FALSE,
                                             "Block8_conv" + pName);
 
         // Add (for skip Connection)
@@ -248,7 +251,7 @@ public:
 
         this->AnalyzeGraph(out);
 
-        return out;
+        return TRUE;
     }
 };
 template <typename DTYPE>
@@ -276,14 +279,14 @@ public:
         Operator<DTYPE>* out = pInput;
 
         // out 1
-        out1 = new ConvolutionLayer2D<DTYPE>(out1, 256, 384, 3, 3, 2, 2, 1,
+        out1 = new ConvolutionLayer2D<DTYPE>(out1, 256, 384, 3, 3, 2, 2, 0,
                                              FALSE, "ReductionA" + pName);
         out1 = new BatchNormalizeLayer<DTYPE>(out1, TRUE, "ReductionA" + pName);
         out1 = new Relu<DTYPE>(out1, "ReductionA_Relu1" + pName);
 
         // out 2-1
         out2 = new ConvolutionLayer2D<DTYPE>(out2, 256, 192, 1, 1, pStride,
-                                             pStride, 1, FALSE,
+                                             pStride, 0, FALSE,
                                              "ReductionA" + pName);
         out2 = new BatchNormalizeLayer<DTYPE>(out2, TRUE, "ReductionA" + pName);
         out2 = new Relu<DTYPE>(out2, "ReductionA_Relu2-1" + pName);
@@ -296,7 +299,7 @@ public:
         out2 = new Relu<DTYPE>(out2, "ReductionA_Relu2-2" + pName);
 
         // out 2-3
-        out2 = new ConvolutionLayer2D<DTYPE>(out2, 192, 256, 3, 3, 2, 2, 1,
+        out2 = new ConvolutionLayer2D<DTYPE>(out2, 192, 256, 3, 3, 2, 2, 0,
                                              FALSE, "ReductionA" + pName);
         out2 = new BatchNormalizeLayer<DTYPE>(out2, TRUE, "ReductionA" + pName);
         out2 = new Relu<DTYPE>(out2, "ReductionA_Relu2-3" + pName);
@@ -311,7 +314,7 @@ public:
 
         this->AnalyzeGraph(out);
 
-        return out;
+        return TRUE;
     }
 };
 
@@ -368,20 +371,20 @@ public:
 
         // out 3-1
         out3 = new ConvolutionLayer2D<DTYPE>(out3, 896, 256, 1, 1, pStride,
-                                             pStride, 1, FALSE,
-                                             "ReductionB" + pName);
-        out3 = new BatchNormalizeLayer<DTYPE>(out3, TRUE, "ReductionB" + pName);
-        out3 = new Relu<DTYPE>(out3, "ReductionB_Relu3" + pName);
-
-        // out 3-2
-        out3 = new ConvolutionLayer2D<DTYPE>(out3, 256, 256, 3, 3, pStride,
                                              pStride, 0, FALSE,
                                              "ReductionB" + pName);
         out3 = new BatchNormalizeLayer<DTYPE>(out3, TRUE, "ReductionB" + pName);
         out3 = new Relu<DTYPE>(out3, "ReductionB_Relu3" + pName);
 
         // out 3-2
-        out3 = new ConvolutionLayer2D<DTYPE>(out3, 256, 256, 3, 3, 2, 2, 1,
+        out3 = new ConvolutionLayer2D<DTYPE>(out3, 256, 256, 3, 3, pStride,
+                                             pStride, 1, FALSE,
+                                             "ReductionB" + pName);
+        out3 = new BatchNormalizeLayer<DTYPE>(out3, TRUE, "ReductionB" + pName);
+        out3 = new Relu<DTYPE>(out3, "ReductionB_Relu3" + pName);
+
+        // out 3-3
+        out3 = new ConvolutionLayer2D<DTYPE>(out3, 256, 256, 3, 3, 2, 2, 0,
                                              FALSE, "ReductionB" + pName);
         out3 = new BatchNormalizeLayer<DTYPE>(out3, TRUE, "ReductionB" + pName);
         out3 = new Relu<DTYPE>(out3, "ReductionB_Relu3" + pName);
@@ -397,7 +400,7 @@ public:
 
         this->AnalyzeGraph(out);
 
-        return out;
+        return TRUE;
     }
 };
 
@@ -410,30 +413,24 @@ private:
 
 public:
     InceptionResNet(Tensorholder<DTYPE>* pInput, Tensorholder<DTYPE>* pLabel,
-                    std::string pBlockType, int pNumOfBlock1, int pNumOfBlock2,
-                    int pNumOfBlock3, int pNumOfBlock4, int pNumOfClass)
+                    int pNumOfClass)
     {
-        Alloc(pInput, pLabel, pBlockType, pNumOfBlock1, pNumOfBlock2,
-              pNumOfBlock3, pNumOfBlock4, pNumOfClass);
+        Alloc(pInput, pLabel, pNumOfClass);
     }
 
     virtual ~InceptionResNet() {}
 
     int Alloc(Tensorholder<DTYPE>* pInput, Tensorholder<DTYPE>* pLabel,
-              std::string pBlockType, int pNumOfBlock1, int pNumOfBlock2,
-              int pNumOfBlock3, int pNumOfBlock4, int pNumOfClass)
+              int pNumOfClass)
     {
         this->SetInput(2, pInput, pLabel);
-
-        // init
-        m_numOutputChannel = 0;
 
         Operator<DTYPE>* out = pInput;
 
         /* stem  layer */
 
         // ReShape
-        out = new ReShape<DTYPE>(out, 3, 299, 299, "ReShape");
+        out = new ReShape<DTYPE>(out, 3, 160, 160, "ReShape");
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, 3, 32, 3, 3, 2, 2, 0, FALSE,
@@ -442,13 +439,13 @@ public:
         out = new Relu<DTYPE>(out, "Relu");
 
         // 2
-        out = new ConvolutionLayer2D<DTYPE>(out, 32, 32, 3, 3, 1, 1, 0, FALSE,
+        out = new ConvolutionLayer2D<DTYPE>(out, 32, 48, 3, 3, 1, 1, 0, FALSE,
                                             "Conv");
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
         out = new Relu<DTYPE>(out, "Relu");
 
         // 3
-        out = new ConvolutionLayer2D<DTYPE>(out, 32, 64, 3, 3, 1, 1, 1, FALSE,
+        out = new ConvolutionLayer2D<DTYPE>(out, 48, 64, 3, 3, 1, 1, 1, FALSE,
                                             "Conv");
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
         out = new Relu<DTYPE>(out, "Relu");
@@ -509,12 +506,12 @@ public:
         out = new Block8<DTYPE>(out, 1, "Block8_1");
 
         // Average pooling
-        out = new GlobalAvaragePooling2D<DTYPE>(out, "Avg Pooling");
+        out = new GlobalAvaragePooling2D<float>(out, "Avg Pooling");
 
         // Dropout
-        out = new Dropout<DTYPE>(out, "Dropout");
-        out = new ReShape<DTYPE>(out, 1, 1, 512, "ReShape");
-        out = new Linear<DTYPE>(out, 512, pNumOfClass, FALSE, "Classification");
+        out = new Dropout<DTYPE>(out, 0.8, "Dropout");
+        out = new ReShape<DTYPE>(out, 1792, 1, 1, "ReShape");
+        out = new Linear<DTYPE>(out, 1792, pNumOfClass, FALSE, "Classification");
         out = new BatchNormalizeLayer<DTYPE>(out, FALSE, "BN");
 
         this->AnalyzeGraph(out);
