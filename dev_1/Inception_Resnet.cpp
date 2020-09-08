@@ -85,16 +85,6 @@ public:
             new ConvolutionLayer2D<DTYPE>(out, 96, 256, 3, 3, pStride, pStride,
                                           0, FALSE, "Block35_conv" + pName);
 
-        // // ShortCut
-        // if ((pStride != 1) || (pNumInputChannel != pNumOutputChannel))
-        // {
-        //     remember = new ConvolutionLayer2D<DTYPE>(
-        //         remember, pNumInputChannel, pNumOutputChannel, 1, 1, pStride,
-        //         pStride, 0, FALSE, "Block35_Shortcut" + pName);
-        //     remember = new BatchNormalizeLayer<DTYPE>(
-        //         remember, TRUE, "Block35_Shortcut" + pName);
-        // }
-
         // Add (for skip Connection)
         out = new Addall<DTYPE>(remember, out,
                                 "Incpetion_ResNet_Skip_Add " + pName);
@@ -430,22 +420,22 @@ public:
         /* stem  layer */
 
         // ReShape
-        out = new ReShape<DTYPE>(out, 3, 160, 160, "ReShape");
+        //out = new ReShape<DTYPE>(out, 3, 224, 224, "ReShape");
 
         // 1
-        out = new ConvolutionLayer2D<DTYPE>(out, 3, 32, 3, 3, 2, 2, 0, FALSE,
+        out = new ConvolutionLayer2D<DTYPE>(out, 3, 32, 3, 3, 2, 2, 0, TRUE,
                                             "Conv");
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
         out = new Relu<DTYPE>(out, "Relu");
 
         // 2
-        out = new ConvolutionLayer2D<DTYPE>(out, 32, 48, 3, 3, 1, 1, 0, FALSE,
+        out = new ConvolutionLayer2D<DTYPE>(out, 32, 48, 3, 3, 1, 1, 0, TRUE,
                                             "Conv");
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
         out = new Relu<DTYPE>(out, "Relu");
 
         // 3
-        out = new ConvolutionLayer2D<DTYPE>(out, 48, 64, 3, 3, 1, 1, 1, FALSE,
+        out = new ConvolutionLayer2D<DTYPE>(out, 48, 64, 3, 3, 1, 1, 1, TRUE,
                                             "Conv");
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
         out = new Relu<DTYPE>(out, "Relu");
@@ -454,19 +444,19 @@ public:
         out = new Maxpooling2D<DTYPE>(out, 3, 3, 2, 2, 0, "MaxPool");
 
         // 5
-        out = new ConvolutionLayer2D<DTYPE>(out, 64, 80, 1, 1, 1, 1, 0, FALSE,
+        out = new ConvolutionLayer2D<DTYPE>(out, 64, 80, 1, 1, 1, 1, 0, TRUE,
                                             "Conv");
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
         out = new Relu<DTYPE>(out, "Relu");
 
         // 6
-        out = new ConvolutionLayer2D<DTYPE>(out, 80, 192, 3, 3, 1, 1, 0, FALSE,
+        out = new ConvolutionLayer2D<DTYPE>(out, 80, 192, 3, 3, 1, 1, 0, TRUE,
                                             "Conv");
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
         out = new Relu<DTYPE>(out, "Relu");
 
         // 7
-        out = new ConvolutionLayer2D<DTYPE>(out, 192, 256, 3, 3, 2, 2, 0, FALSE,
+        out = new ConvolutionLayer2D<DTYPE>(out, 192, 256, 3, 3, 2, 2, 0,TRUE,
                                             "Conv");
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
         out = new Relu<DTYPE>(out, "Relu");
@@ -500,10 +490,10 @@ public:
 
         // Block8 * 5
         out = new Block8<DTYPE>(out, 1, "Block8_1");
-        out = new Block8<DTYPE>(out, 1, "Block8_1");
-        out = new Block8<DTYPE>(out, 1, "Block8_1");
-        out = new Block8<DTYPE>(out, 1, "Block8_1");
-        out = new Block8<DTYPE>(out, 1, "Block8_1");
+        out = new Block8<DTYPE>(out, 1, "Block8_2");
+        out = new Block8<DTYPE>(out, 1, "Block8_3");
+        out = new Block8<DTYPE>(out, 1, "Block8_4");
+        out = new Block8<DTYPE>(out, 1, "Block8_5");
 
         // Average pooling
         out = new GlobalAvaragePooling2D<float>(out, "Avg Pooling");
@@ -512,7 +502,7 @@ public:
         out = new Dropout<DTYPE>(out, 0.8, "Dropout");
         out = new ReShape<DTYPE>(out, 1792, 1, 1, "ReShape");
         out = new Linear<DTYPE>(out, 1792, pNumOfClass, FALSE, "Classification");
-        out = new BatchNormalizeLayer<DTYPE>(out, FALSE, "BN");
+        out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
 
         this->AnalyzeGraph(out);
 
