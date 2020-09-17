@@ -1,6 +1,6 @@
-#include "../../../WICWIU_src/NeuralNetwork.hpp"
-#include "../../../WICWIU_src/Operator/Dropout.hpp"
-#include <cuda.h>
+#include "WICWIU/WICWIU_src/NeuralNetwork.hpp"
+#include "WICWIU/WICWIU_src/Operator/Dropout.hpp"
+// #include <cuda.h>
 #include <iostream>
 #include <string>
 
@@ -295,7 +295,7 @@ public:
         out2 = new Relu<DTYPE>(out2, "ReductionA_Relu2-3" + pName);
 
         // out3
-        out3 = new Maxpooling2D<DTYPE>(out3, 3, 3, 2, 2, "MaxPool");
+        out3 = new Maxpooling2D<float>(out3, 3, 3, 2, 2, "MaxPool");
 
         // concat
         out =
@@ -398,8 +398,6 @@ template <typename DTYPE>
 class InceptionResNet : public NeuralNetwork<DTYPE>
 {
 private:
-    int m_numInputChannel;
-    int m_numOutputChannel;
 
 public:
     InceptionResNet(Tensorholder<DTYPE>* pInput, Tensorholder<DTYPE>* pLabel,
@@ -420,7 +418,7 @@ public:
         /* stem  layer */
 
         // ReShape
-        //out = new ReShape<DTYPE>(out, 3, 224, 224, "ReShape");
+        out = new ReShape<DTYPE>(out, 3, 160, 160, "ReShape");
 
         // 1
         out = new ConvolutionLayer2D<DTYPE>(out, 3, 32, 3, 3, 2, 2, 0, TRUE,
@@ -428,6 +426,7 @@ public:
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
         out = new Relu<DTYPE>(out, "Relu");
 
+        printf("Testing 1\n");
         // 2
         out = new ConvolutionLayer2D<DTYPE>(out, 32, 48, 3, 3, 1, 1, 0, TRUE,
                                             "Conv");
@@ -461,6 +460,7 @@ public:
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
         out = new Relu<DTYPE>(out, "Relu");
 
+        printf("Testing 2\n");
         /* end stem  layer */
 
         // Block35 * 5
@@ -470,6 +470,8 @@ public:
         out = new Block35<DTYPE>(out, 1, "Block35_4");
         out = new Block35<DTYPE>(out, 1, "Block35_5");
 
+
+        printf("Testing 3\n");
         // ReductionA
         out = new ReductionA<DTYPE>(out, 1, "ReductionA");
 
@@ -497,30 +499,28 @@ public:
 
         // Average pooling
         out = new GlobalAvaragePooling2D<float>(out, "Avg Pooling");
-
+        printf("Testing 4\n");
         // Dropout
-        out = new Dropout<DTYPE>(out, 0.8, "Dropout");
+        //out = new Dropout<DTYPE>(out, 0.8, "Dropout");
         out = new ReShape<DTYPE>(out, 1792, 1, 1, "ReShape");
         out = new Linear<DTYPE>(out, 1792, pNumOfClass, FALSE, "Classification");
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
-
+        printf("Testing 5\n");
         this->AnalyzeGraph(out);
-
+        printf("After analyzegraph\n");
         // softmax
         this->SetLossFunction(
             new SoftmaxCrossEntropy<float>(out, pLabel, "SCE"));
-        // SetLossFunction(new TripletLoss<float>(out, label, 1.0,
-        // "TripletLoss"));
-        // SetLossFunction(new CrossEntropy<float>(out, label, "CE"));
-
+        printf("before optimizer\n");
         // ======================= Select Optimizer ===================
         this->SetOptimizer(new AdamOptimizer<float>(
             this->GetParameter(), 0.001, 0.9, 0.999, 1e-08, 5e-4, MINIMIZE));
+         printf("After optimizer \n");
         // this->SetOptimizer(new AdamOptimizer<float>(
         //     this->GetParameter(), 0.0001, 0.9, 0.999, 1e-08, MINIMIZE));
         // this->SetOptimizer(new AdamOptimizer<float>(
         //     this->GetParameter(), 0.00001, 0.9, 0.999, 1e-08, MINIMIZE));
-
+        
         return TRUE;
     }
 };
