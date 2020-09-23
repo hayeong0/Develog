@@ -502,7 +502,7 @@ public:
         printf("Testing 4\n");
         // Dropout
         //out = new Dropout<DTYPE>(out, 0.8, "Dropout");
-        out = new ReShape<DTYPE>(out, 1792, 1, 1, "ReShape");
+        out = new ReShape<DTYPE>(out, 1, 1, 1792, "ReShape");
         out = new Linear<DTYPE>(out, 1792, pNumOfClass, FALSE, "Classification");
         out = new BatchNormalizeLayer<DTYPE>(out, TRUE, "BN");
         printf("Testing 5\n");
